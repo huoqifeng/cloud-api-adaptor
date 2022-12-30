@@ -71,11 +71,11 @@ func (c IBMCloudAssert) HasPodVM(t *testing.T, id string) {
 	}
 
 	for i, instance := range instances.Instances {
-		name := instance.Name
-		fmt.Println("Instance number: ", i, " Instance id: ", instance.ID, " Instance name: ", name)
+		name := *instance.Name
+		fmt.Println("Instance number: ", i, " Instance id: ", *instance.ID, " Instance name: ", name)
 		// TODO: PodVM name is podvm-POD_NAME-SANDBOX_ID, where SANDBOX_ID is truncated
 		// in the 8th word. Ideally we should match the exact name, not just podvm-POD_NAME.
-		if strings.HasPrefix(*name, strings.Join([]string{"podvm", id, ""}, "-")) {
+		if strings.HasPrefix(name, strings.Join([]string{"podvm", id, ""}, "-")) {
 			return
 		}
 	}
