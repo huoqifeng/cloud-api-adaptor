@@ -7,18 +7,19 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 )
 
-var vpc *vpcv1.VpcV1
+var (
+	mu sync.Mutex
+	vpc *vpcv1.VpcV1
+)
 
 func initVpcV1() (*vpcv1.VpcV1, error) {
-	if vpc != nil {
-		return vpc, nil
-	}
 	apiKey := os.Getenv("APIKEY")
 	iamServiceURL := os.Getenv("IAM_SERVICE_URL")
 	vpcServiceURL := os.Getenv("VPC_SERVICE_URL")
@@ -31,6 +32,14 @@ func initVpcV1() (*vpcv1.VpcV1, error) {
 	if len(vpcServiceURL) <= 0 {
 		return nil, errors.New("VPC_SERVICE_URL was not set.")
 	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	if vpc != nil {
+		return vpc, nil
+	}
+
 	vpcv1, err := vpcv1.NewVpcV1(&vpcv1.VpcV1Options{
 		Authenticator: &core.IamAuthenticator{
 			ApiKey: apiKey,
