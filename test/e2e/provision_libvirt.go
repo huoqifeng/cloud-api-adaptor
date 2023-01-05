@@ -68,6 +68,14 @@ func (l *LibvirtProvisioner) CreateVPC(ctx context.Context, cfg *envconf.Config)
 	return nil
 }
 
+func (l *LibvirtProvisioner) DeleteVPC(ctx context.Context, cfg *envconf.Config) error {
+	return nil
+}
+
+func (l *LibvirtProvisioner) DeleteCluster(ctx context.Context, cfg *envconf.Config) error {
+	return nil
+}
+
 func GetCloudProvisioner() (CloudProvision, error) {
 	return NewLibvirtProvisioner("default", "default")
 }
