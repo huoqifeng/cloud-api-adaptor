@@ -205,4 +205,4 @@ waitClusterReady 0
 echo "set KUBECONFIG for cluster"
 ibmcloud cs cluster config --cluster $cluster_name --admin --network
 
-echo "end"
+echo "Creating IKS cluster ended"

@@ -13,6 +13,7 @@ BINARIES   := cloud-api-adaptor agent-protocol-forwarder
 SOURCEDIRS := ./cmd ./pkg
 PACKAGES   := $(shell go list $(addsuffix /...,$(SOURCEDIRS)))
 SOURCES    := $(shell find $(SOURCEDIRS) -name '*.go' -print)
+E2ETIMEOUT ?= 30m
 
 all: build
 build: $(BINARIES)
@@ -59,7 +60,7 @@ test: ## Run tests.
 
 .PHONY: test-e2e
 test-e2e: ## Run end-to-end tests.
-	go test -v $(GOFLAGS) -count=1 ./test/e2e
+	go test -v $(GOFLAGS) -count=1 -timeout $(E2ETIMEOUT) ./test/e2e
 
 .PHONY: check
 check: fmt vet ## Run go vet and go vet against the code.

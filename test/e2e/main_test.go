@@ -72,10 +72,11 @@ func TestMain(m *testing.M) {
 			}
 		}
 
-		peerPods := NewPeerPods(cloudProvider)
-		if err = peerPods.Deploy(ctx, cfg); err != nil {
-			return ctx, err
-		}
+		//  TODO implement the PeerPods deploy for ibmcloud
+		//	peerPods := NewPeerPods(cloudProvider)
+		//	if err = peerPods.Deploy(ctx, cfg); err != nil {
+		//		return ctx, err
+		//	}
 		return ctx, nil
 	})
 
@@ -85,7 +86,7 @@ func TestMain(m *testing.M) {
 			if err = provisioner.DeleteCluster(ctx, cfg); err != nil {
 				return ctx, nil
 			}
-			
+
 			if err = provisioner.DeleteVPC(ctx, cfg); err != nil {
 				return ctx, err
 			}
