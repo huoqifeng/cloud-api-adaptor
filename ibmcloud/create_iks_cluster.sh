@@ -158,8 +158,11 @@ echo "enable ssh login policy"
 export security_group=$(ibmcloud is vpc ${vpcID} --output JSON | jq -r .default_security_group.id)
 ibmcloud is security-group-rule-add $security_group inbound tcp --port-min 22 --port-max 22 --output JSON
 
+# create a public gateway
+ibmcloud is public-gateway-create "${cluster_name}-gateway" "${cluster_name}-vpc" "${zone}"
+
 # Create a subnet in each of zones 1 and 2 with 32 addresses
-ibmcloud is subnet-create ${cluster_name}-sn1 ${vpcID} --zone ${zone} --ipv4-address-count 32 --resource-group-name ${resource_group}
+ibmcloud is subnet-create ${cluster_name}-sn1 ${vpcID} --zone ${zone} --ipv4-address-count 32 --resource-group-name ${resource_group} --pgw "${cluster_name}-gateway"
 export subnetID=$(ibmcloud is subnet ${cluster_name}-sn1 --output JSON | jq -r .id)
 
 until ibmcloud ks init --host $iks_endpoint; do sleep 1; done
@@ -204,5 +207,11 @@ waitClusterReady 0
 
 echo "set KUBECONFIG for cluster"
 ibmcloud cs cluster config --cluster $cluster_name --admin --network
+
+# label worker
+sleep 10
+echo "label worker in cluster"
+node_name=$(kubectl get node -o json | jq -r '.items[0].metadata.name')
+kubectl label node "${node_name}" node-role.kubernetes.io/worker=
 
 echo "Creating IKS cluster ended"

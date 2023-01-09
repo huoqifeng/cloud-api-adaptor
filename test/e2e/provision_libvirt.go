@@ -68,6 +68,10 @@ func (l *LibvirtProvisioner) CreateVPC(ctx context.Context, cfg *envconf.Config)
 	return nil
 }
 
+func (c *IBMCloudProvisioner) Kustomize(ctx context.Context, cfg *envconf.Config) error {
+	return nil
+}
+
 func (l *LibvirtProvisioner) DeleteVPC(ctx context.Context, cfg *envconf.Config) error {
 	return nil
 }

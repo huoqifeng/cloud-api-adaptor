@@ -70,13 +70,16 @@ func TestMain(m *testing.M) {
 			if err = provisioner.CreateCluster(ctx, cfg); err != nil {
 				return ctx, nil
 			}
+
+			if err = provisioner.Kustomize(ctx, cfg); err != nil {
+				return ctx, nil
+			}
 		}
 
-		//  TODO implement the PeerPods deploy for ibmcloud
-		//	peerPods := NewPeerPods(cloudProvider)
-		//	if err = peerPods.Deploy(ctx, cfg); err != nil {
-		//		return ctx, err
-		//	}
+		peerPods := NewPeerPods(cloudProvider)
+		if err = peerPods.Deploy(ctx, cfg); err != nil {
+			return ctx, err
+		}
 		return ctx, nil
 	})
 

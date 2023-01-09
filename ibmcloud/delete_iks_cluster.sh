@@ -83,7 +83,6 @@ echo "production environment"
 export endpoint="cloud.ibm.com"
 export iks_endpoint="https://containers.cloud.ibm.com"
 
-
 waitClusterDeleted() {
     CHECK_ATTEMPTS=$1
     MAX_ATTEMPTS_ALLOWED=30
@@ -169,6 +168,20 @@ deleteVPC() {
     fi
 }
 
+deleteGateway() {
+    echo "Delete public gateway: ${gateway} ..."
+    delete_gateway_output=$(ibmcloud is public-gateway-delete "${gateway}" -f -q --output JSON)
+    result=$(echo "$delete_gateway_output" | jq '.[].result')
+    echo "$result"
+    if [[ $result == "true" ]]; then
+        echo "public gateway ${public_gateway_name} is deleted"
+        return 0
+    else
+        echo "Failed to delete public gateway ${public_gateway_name}"
+        return 99
+    fi
+}
+
 # Login to test.cloud, use us-south and a named resource group
 ibmcloud login -a ${endpoint} -r ${region} --apikey ${apikey}
 
@@ -203,7 +216,11 @@ if [[ -n $cluster_name ]]; then
     if [[ -z $vpc ]]; then
         vpc="${cluster_name}-vpc"
     fi
+    if [[ -z $gateway ]]; then
+        gateway=${cluster_name}-gateway
+    fi
 
+    # subnet
     ibmcloud is subnet $subnet -q &> /dev/null
     if [[ $? -ne 0 ]]; then
         not_found_array=("${not_found_array[@]}" "subnet: $subnet")
@@ -217,6 +234,21 @@ if [[ -n $cluster_name ]]; then
         fi
     fi
 
+    # gateway
+    ibmcloud is public-gateway $gateway -q &> /dev/null
+    if [[ $? -ne 0 ]]; then
+        not_found_array=("${not_found_array[@]}" "gateway: $gateway")
+    else
+        echo "Delete Gateway: $gateway ..."
+        deleteGateway
+        if [[ $? -eq 0 ]]; then
+            succeed_array=("${succeed_array[@]}" "gateway: $gateway")
+        else
+            failed_array=("${failed_array[@]}" "gateway: $gateway")
+        fi
+    fi
+
+    # vpc
     ibmcloud is vpc $vpc -q &> /dev/null
     if [[ $? -ne 0 ]]; then
         not_found_array=("${not_found_array[@]}" "vpc: $vpc")
