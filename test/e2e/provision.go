@@ -22,15 +22,6 @@ import (
 	"sigs.k8s.io/e2e-framework/pkg/envconf"
 )
 
-// CloudProvision defines operations to provision the environment on cloud providers.
-type CloudProvision interface {
-	CreateCluster(ctx context.Context, cfg *envconf.Config) error
-	CreateVPC(ctx context.Context, cfg *envconf.Config) error
-	DeleteCluster(ctx context.Context, cfg *envconf.Config) error
-	DeleteVPC(ctx context.Context, cfg *envconf.Config) error
-	UploadPodvm(imagePath string, ctx context.Context, cfg *envconf.Config) error
-}
-
 type PeerPods struct {
 	caaDaemonSet         *appsv1.DaemonSet    // Represents the cloud-api-adaptor daemonset
 	ccDaemonSet          *appsv1.DaemonSet    // Represents the CoCo installer daemonset
@@ -118,9 +109,6 @@ func (p *PeerPods) Deploy(ctx context.Context, cfg *envconf.Config) error {
 	}
 
 	return nil
-}
-
-func (p *PeerPods) DoKustomize(ctx context.Context, cfg *envconf.Config) {
 }
 
 // TODO: convert this into a klient/wait/conditions

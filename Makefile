@@ -11,7 +11,8 @@ endif
 ARCH        ?= $(subst x86_64,amd64,$(shell uname -m))
 GOOPTIONS   ?= GOOS=linux GOARCH=$(ARCH)
 GOFLAGS     ?= -tags=$(CLOUD_PROVIDER)
-BINARIES    := cloud-api-adaptor agent-protocol-forwarder
+#BINARIES    := cloud-api-adaptor agent-protocol-forwarder cluster-provisioner
+BINARIES    := cluster-provisioner
 SOURCEDIRS  := ./cmd ./pkg
 PACKAGES    := $(shell go list $(addsuffix /...,$(SOURCEDIRS)))
 SOURCES     := $(shell find $(SOURCEDIRS) -name '*.go' -print)

@@ -3,7 +3,7 @@
 // (C) Copyright Confidential Containers Contributors
 // SPDX-License-Identifier: Apache-2.0
 
-package e2e
+package provutils
 
 import (
 	"context"
@@ -167,6 +167,10 @@ func (l *LibvirtProvisioner) UploadPodvm(imagePath string, ctx context.Context, 
 	return nil
 }
 
+func (p *LibvirtProvisioner) DoKustomize(ctx context.Context, cfg *envconf.Config) error {
+	return nil
+}
+
 func (l *LibvirtProvisioner) GetStoragePool() (*libvirt.StoragePool, error) {
 	sp, err := l.conn.LookupStoragePoolByName(l.storage)
 	if err != nil {
@@ -176,7 +180,6 @@ func (l *LibvirtProvisioner) GetStoragePool() (*libvirt.StoragePool, error) {
 	return sp, nil
 }
 
-//nolint:typecheck
-func GetCloudProvisioner() (CloudProvision, error) {
+func getLibvirtCloudProvisioner() (CloudProvision, error) {
 	return NewLibvirtProvisioner("default", "default")
 }
