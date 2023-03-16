@@ -31,6 +31,7 @@ type IBMCloudProperties struct {
 	InstanceProfile string
 	PodvmImageID    string
 	PodvmImageArch  string
+	PublicGatewayID string
 	Region          string
 	ResourceGroupID string
 	SshKeyContent   string
@@ -81,14 +82,13 @@ func initLogger() {
 
 func initProperties(properties map[string]string) error {
 	IBMCloudProps = &IBMCloudProperties{
-		ApiKey:        properties["APIKEY"],
-		Bucket:        properties["COS_BUCKET"],
-		ClusterName:   properties["CLUSTER_NAME"],
-		CosApiKey:     properties["COS_APIKEY"],
-		CosInstanceID: properties["COS_INSTANCE_ID"],
-		CosServiceURL: properties["COS_SERVICE_URL"],
-		IamServiceURL: properties["IAM_SERVICE_URL"],
-		// IsSelfManaged    : properties["IS_SELF_MANAGED_CLUSTER"]
+		ApiKey:          properties["APIKEY"],
+		Bucket:          properties["COS_BUCKET"],
+		ClusterName:     properties["CLUSTER_NAME"],
+		CosApiKey:       properties["COS_APIKEY"],
+		CosInstanceID:   properties["COS_INSTANCE_ID"],
+		CosServiceURL:   properties["COS_SERVICE_URL"],
+		IamServiceURL:   properties["IAM_SERVICE_URL"],
 		InstanceProfile: properties["INSTANCE_PROFILE_NAME"],
 		PodvmImageID:    properties["PODVM_IMAGE_ID"],
 		PodvmImageArch:  properties["PODVM_IMAGE_ARCH"],
@@ -100,8 +100,7 @@ func initProperties(properties map[string]string) error {
 		VpcName:         properties["VPC_NAME"],
 		VpcServiceURL:   properties["VPC_SERVICE_URL"],
 		WorkerFlavor:    properties["WORKER_FLAVOR"],
-		// WorkerCount   : properties["WORKERS_COUNT"]
-		Zone: properties["ZONE"],
+		Zone:            properties["ZONE"],
 	}
 
 	if len(IBMCloudProps.ClusterName) <= 0 {
