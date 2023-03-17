@@ -176,14 +176,15 @@ func (p *CloudAPIAdaptor) Deploy(ctx context.Context, cfg *envconf.Config, props
 
 	fmt.Printf("Wait for the %s deployment be available\n", p.controllerDeployment.GetName())
 	if err = wait.For(conditions.New(resources).DeploymentConditionMatch(p.controllerDeployment, appsv1.DeploymentAvailable, corev1.ConditionTrue),
-		wait.WithTimeout(time.Minute*1)); err != nil {
+		wait.WithTimeout(time.Minute*10)); err != nil {
 		return err
 	}
 
-	fmt.Println("Install CoCo and cloud-api-adaptor")
+	fmt.Println("Customize the overlay yaml file")
 	if err := p.installOverlay.Edit(ctx, cfg, props); err != nil {
 		return err
 	}
+	fmt.Println("Install CoCo and cloud-api-adaptor")
 	if err := p.installOverlay.Apply(ctx, cfg); err != nil {
 		return err
 	}
@@ -191,7 +192,7 @@ func (p *CloudAPIAdaptor) Deploy(ctx context.Context, cfg *envconf.Config, props
 	// Wait for the CoCo installer and CAA pods be ready
 	daemonSetList := map[*appsv1.DaemonSet]time.Duration{
 		p.ccDaemonSet:  time.Minute * 10,
-		p.caaDaemonSet: time.Minute * 2,
+		p.caaDaemonSet: time.Minute * 10,
 	}
 
 	for ds, timeout := range daemonSetList {
@@ -202,7 +203,7 @@ func (p *CloudAPIAdaptor) Deploy(ctx context.Context, cfg *envconf.Config, props
 			ds = object.(*appsv1.DaemonSet)
 
 			return ds.Status.CurrentNumberScheduled > 0
-		}), wait.WithTimeout(time.Second*20)); err != nil {
+		}), wait.WithTimeout(time.Second*120)); err != nil {
 			return err
 		}
 		pods, err := GetDaemonSetOwnedPods(ctx, cfg, ds)
