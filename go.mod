@@ -151,3 +151,5 @@ require (
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20180817151627-c66870c02cf8
 
 replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.14.0
+
+replace github.com/kata-containers/kata-containers/src/runtime => github.com/stevenhorsman/kata-containers/src/runtime v0.0.0-20230620142755-670843f83dcc
