@@ -43,12 +43,17 @@ func (*Manager) LoadEnv() {
 	cloud.DefaultToEnv(&ibmcloudVPCConfig.VpcServiceURL, "IBMCLOUD_VPC_ENDPOINT", "")
 	cloud.DefaultToEnv(&ibmcloudVPCConfig.ResourceGroupID, "IBMCLOUD_RESOURCE_GROUP_ID", "")
 	cloud.DefaultToEnv(&ibmcloudVPCConfig.ProfileName, "IBMCLOUD_PODVM_INSTANCE_PROFILE_NAME", "")
-	cloud.DefaultToEnv(&ibmcloudVPCConfig.InstanceProfiles, "IBMCLOUD_PODVM_INSTANCE_PROFILE_LIST", "")
 	cloud.DefaultToEnv(&ibmcloudVPCConfig.ZoneName, "IBMCLOUD_ZONE", "")
 	cloud.DefaultToEnv(&ibmcloudVPCConfig.PrimarySubnetID, "IBMCLOUD_VPC_SUBNET_ID", "")
 	cloud.DefaultToEnv(&ibmcloudVPCConfig.PrimarySecurityGroupID, "IBMCLOUD_VPC_SG_ID", "")
 	cloud.DefaultToEnv(&ibmcloudVPCConfig.KeyID, "IBMCLOUD_SSH_KEY_ID", "")
 	cloud.DefaultToEnv(&ibmcloudVPCConfig.VpcID, "IBMCLOUD_VPC_ID", "")
+
+	var instanceProfilesStr string
+	cloud.DefaultToEnv(&instanceProfilesStr, "IBMCLOUD_PODVM_INSTANCE_PROFILE_LIST", "")
+	if instanceProfilesStr != "" {
+		ibmcloudVPCConfig.InstanceProfiles.Set(instanceProfilesStr)
+	}
 }
 
 func (*Manager) NewProvider() (cloud.Provider, error) {
