@@ -54,6 +54,12 @@ func (*Manager) LoadEnv() {
 	if instanceProfilesStr != "" {
 		ibmcloudVPCConfig.InstanceProfiles.Set(instanceProfilesStr)
 	}
+
+	var imageIDsStr string
+	cloud.DefaultToEnv(&imageIDsStr, "IBMCLOUD_PODVM_IMAGE_ID", "")
+	if imageIDsStr != "" {
+		ibmcloudVPCConfig.Images.Set(imageIDsStr)
+	}
 }
 
 func (*Manager) NewProvider() (cloud.Provider, error) {
