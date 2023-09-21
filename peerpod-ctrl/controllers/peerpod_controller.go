@@ -143,12 +143,11 @@ func (r *PeerPodReconciler) cloudConfigsGetter() error {
 
 func SetProvider() (cloud.Provider, error) {
 	cloudName := os.Getenv("CLOUD_PROVIDER")
-	logger.Info("CLOUD_PROVIDER: ", cloudName)
 	if cloud := cloudmgr.Get(cloudName); cloud != nil {
 		cloud.LoadEnv() // we assume LoadEnv knows to load all necessary configs
 		provider, err := cloud.NewProvider()
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("SetProvider %s has error: %s", cloudName, err.Error())
 		}
 		return provider, nil
 	}
