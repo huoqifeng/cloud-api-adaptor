@@ -16,11 +16,11 @@ ARG RUST_VERSION="1.72.0"
 ARG YQ_VERSION="v4.35.1"
 ARG YQ_CHECKSUM="sha256:bd695a6513f1196aeda17b174a15e9c351843fb1cef5f9be0af170f2dd744f08"
 
-RUN dnf groupinstall -y 'Development Tools' 'Development Libraries' && \
-    dnf install -y yum-utils gnupg git perl perl-core pkg-config libseccomp-devel gpgme-devel \
+RUN dnf groupinstall -y 'Development Tools' && \
+    dnf install -y yum-utils gnupg git perl-core pkg-config libseccomp-devel gpgme-devel \
         device-mapper-devel unzip libassuan-devel \
         perl-FindBin openssl-devel tpm2-tss-devel \
-        clang which qemu-kvm && \
+        clang which && \
     dnf clean all
 
 ADD https://dl.google.com/go/go${GO_VERSION}.linux-${ARCH}.tar.gz go${GO_VERSION}.linux-${ARCH}.tar.gz
@@ -32,10 +32,7 @@ RUN chmod a+x /usr/local/bin/yq
 ENV PATH "/root/.cargo/bin:/usr/local/go/bin:$PATH"
 
 ADD https://sh.rustup.rs rustup
-RUN chmod a+x rustup && ./rustup -y --default-toolchain ${RUST_VERSION} && \
-    rustup target add x86_64-unknown-linux-musl && \
-    ln -sf /usr/bin/g++ /bin/musl-g++ && \
-    rustup target add s390x-unknown-linux-gnu
+RUN chmod a+x rustup && ./rustup -y --default-toolchain ${RUST_VERSION}
 
 ADD https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip
 RUN unzip protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip -d /usr/local && rm -f protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip
@@ -43,3 +40,8 @@ RUN unzip protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip -d /usr/local && rm 
 WORKDIR /src
 
 ENV GOPATH /src
+
+# for debug
+COPY . /src/cloud-api-adaptor
+
+WORKDIR /src/cloud-api-adaptor/podvm
