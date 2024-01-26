@@ -6,7 +6,7 @@
 #
 ARG BUILDER_IMG
 
-FROM --platform=$TARGETPLATFORM ${BUILDER_IMG} AS podvm_builder
+FROM ${BUILDER_IMG} AS podvm_builder
 
 ARG CLOUD_PROVIDER
 ARG PODVM_DISTRO=rhel

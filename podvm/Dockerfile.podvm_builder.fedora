@@ -5,18 +5,18 @@
 #
 # Build binaries for mkosi podvm image
 #
-FROM multiarch/qemu-user-static:s390x-6.1.0-8 as qemu
-FROM --platform=$TARGETPLATFORM registry.fedoraproject.org/fedora:39
-
-COPY --from=qemu /usr/bin/qemu-s390x-static /usr/bin
+FROM registry.fedoraproject.org/fedora:38
 
 ARG ARCH="amd64"
 ARG YQ_ARCH="amd64"
+# PROTOC_ARCH="x86_64" | "s390x_64"
 ARG PROTOC_ARCH="x86_64"
 ARG GO_VERSION="1.20.12"
 ARG PROTOC_VERSION="3.11.4"
 ARG RUST_VERSION="1.72.0"
 ARG YQ_VERSION="v4.35.1"
+# amd64: YQ_CHECKSUM="sha256:bd695a6513f1196aeda17b174a15e9c351843fb1cef5f9be0af170f2dd744f08"
+# s390x: YQ_CHECKSUM="sha256:4e6324d08630e7df733894a11830412a43703682d65a76f1fc925aac08268a45"
 ARG YQ_CHECKSUM="sha256:bd695a6513f1196aeda17b174a15e9c351843fb1cef5f9be0af170f2dd744f08"
 
 RUN dnf groupinstall -y 'Development Tools' && \
@@ -43,8 +43,3 @@ RUN unzip protoc-${PROTOC_VERSION}-linux-${PROTOC_ARCH}.zip -d /usr/local && rm 
 WORKDIR /src
 
 ENV GOPATH /src
-
-# for debug
-COPY . /src/cloud-api-adaptor
-
-WORKDIR /src/cloud-api-adaptor/podvm
