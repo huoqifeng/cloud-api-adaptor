@@ -31,7 +31,7 @@ COPY . /src/cloud-api-adaptor
 
 WORKDIR /src/cloud-api-adaptor/podvm
 
-RUN make binaries
+RUN LIBC=gnu make binaries
 
 FROM scratch
 COPY --from=podvm_builder /src/cloud-api-adaptor/podvm/files /
