@@ -32,7 +32,6 @@ jobs:
       - name: Build builder
         uses: docker/build-push-action@v5
         with:
-          platforms: linux/amd64,linux/s390x
           tags: ghcr.io/${{ github.repository }}/podvm/builder-fedora:${{ github.sha }}
           file: podvm/Dockerfile.podvm_builder.fedora
           push: true
@@ -40,7 +39,6 @@ jobs:
       - name: Build binaries
         uses: docker/build-push-action@v5
         with:
-          platforms: linux/amd64,linux/s390x
           tags: ghcr.io/${{ github.repository }}/podvm/binaries-fedora:${{ github.sha }}
           file: podvm/Dockerfile.podvm_binaries.fedora
           push: true
