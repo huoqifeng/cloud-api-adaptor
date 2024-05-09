@@ -47,4 +47,7 @@ func TestKbsKeyRelease(t *testing.T) {
 	}
 	t.Parallel()
 	DoTestKbsKeyRelease(t, testEnv, assert)
+
+	keyBrokerService.EnableKbsCustomizedPolicy("deny_all.rego")
+	DoTestKbsKeyReleaseForFailure(t, testEnv, assert)
 }
