@@ -115,3 +115,6 @@ popd
 rm -f libvirt.properties
 echo "libvirt_uri=\"qemu+ssh://${USER}@${IP}/system?no_verify=1\"" >> libvirt.properties
 echo "libvirt_ssh_key_file=\"id_rsa\"" >> libvirt.properties
+echo "CLUSTER_NAME=\"peer-pods\"" >> libvirt.properties
+[ -z ${KBS_IMAGE} ] || echo "KBS_IMAGE=\"${KBS_IMAGE}\"" >> libvirt.properties
+[ -z ${KBS_IMAGE_TAG} ] || echo "KBS_IMAGE_TAG=\"${KBS_IMAGE_TAG}\"" >> libvirt.properties

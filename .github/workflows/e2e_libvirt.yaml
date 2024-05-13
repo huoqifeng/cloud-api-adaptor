@@ -48,6 +48,10 @@ jobs:
       - name: Read properties from versions.yaml
         run: |
           sudo snap install yq
+          echo "KBS_IMAGE=$(yq -e '.oci.kbs.registry' versions.yaml)" >> "$GITHUB_ENV"
+          echo "KBS_IMAGE_TAG=$(yq -e '.oci.kbs.tag' versions.yaml)" >> "$GITHUB_ENV"
+          echo "KBS_VERSION=$(yq -e '.git.kbs.reference' versions.yaml)" >> "$GITHUB_ENV"
+          echo "RUST_VERSION=$(yq -e '.tools.rust' versions.yaml)" >> "$GITHUB_ENV"
           go_version="$(yq '.tools.golang' versions.yaml)"
           [ -n "$go_version" ]
           echo "GO_VERSION=${go_version}" >> "$GITHUB_ENV"
@@ -78,14 +82,49 @@ jobs:
 
       - name: Config Libvirt
         run: |
+          export KBS_IMAGE=${{ env.KBS_IMAGE }}
+          export KBS_IMAGE_TAG=${{ env.KBS_IMAGE_TAG }}
           ./libvirt/config_libvirt.sh
           # For debugging
           cat libvirt.properties
+
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUSTC_VERSION }}
+          override: true
+          profile: minimal
+
+      #- name: Install build dependencies
+      #  run: |
+      #    sudo apt-get update
+      #    sudo apt-get install -y \
+      #      build-essential \
+      #      clang \
+      #      gcc \
+      #      libdevmapper-dev \
+      #      libgpgme-dev \
+      #      libssl-dev \
+      #      libtss2-dev \
+      #      openssl \
+      #      pkg-config \
+      #      protobuf-compiler
+
+      - name: Checkout kbs Repository and build kbs-client
+        run: |
+          git clone https://github.com/confidential-containers/trustee test/trustee
+          pushd test/trustee
+          git checkout "${KBS_VERSION}"
+          pushd kbs
+          make CLI_FEATURES=sample_only cli
+          popd
+          popd
 
       - name: run tests
         id: runTests
         run: |
           export CLOUD_PROVIDER=libvirt
+          export DEPLOY_KBS=true
           export TEST_PROVISION="yes"
           export TEST_TEARDOWN="no"
           export TEST_PROVISION_FILE="$PWD/libvirt.properties"
