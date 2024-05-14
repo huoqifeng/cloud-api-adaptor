@@ -48,8 +48,6 @@ jobs:
       - name: Read properties from versions.yaml
         run: |
           sudo snap install yq
-          echo "KBS_IMAGE=$(yq -e '.oci.kbs.registry' versions.yaml)" >> "$GITHUB_ENV"
-          echo "KBS_IMAGE_TAG=$(yq -e '.oci.kbs.tag' versions.yaml)" >> "$GITHUB_ENV"
           echo "KBS_VERSION=$(yq -e '.git.kbs.reference' versions.yaml)" >> "$GITHUB_ENV"
           echo "RUST_VERSION=$(yq -e '.tools.rust' versions.yaml)" >> "$GITHUB_ENV"
           go_version="$(yq '.tools.golang' versions.yaml)"
@@ -82,8 +80,6 @@ jobs:
 
       - name: Config Libvirt
         run: |
-          export KBS_IMAGE=${{ env.KBS_IMAGE }}
-          export KBS_IMAGE_TAG=${{ env.KBS_IMAGE_TAG }}
           ./libvirt/config_libvirt.sh
           # For debugging
           cat libvirt.properties
