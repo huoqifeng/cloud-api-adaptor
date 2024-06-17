@@ -19,7 +19,6 @@ const (
 	providerAzure = "azure"
 	providerAws   = "aws"
 
-	defaultAgentConfigPath = "/etc/agent-config.toml"
 	defaultAuthJsonPath    = "/run/peerpod/auth.json"
 )
 
@@ -55,18 +54,6 @@ func init() {
 	}
 	provisionFilesCmd.Flags().IntVarP(&fetchTimeout, "user-data-fetch-timeout", "t", 180, "Timeout (in secs) for fetching user data")
 	rootCmd.AddCommand(provisionFilesCmd)
-
-	var updateAgentConfigCmd = &cobra.Command{
-		Use:   "update-agent-config",
-		Short: "Update the agent configuration file",
-		RunE: func(_ *cobra.Command, _ []string) error {
-			cfg := agent.NewConfig(agentConfigPath, defaultAuthJsonPath, daemonConfigPath)
-			return agent.UpdateConfig(cfg)
-		},
-		SilenceUsage: true, // Silence usage on error
-	}
-	updateAgentConfigCmd.Flags().StringVarP(&agentConfigPath, "agent-config-file", "a", defaultAgentConfigPath, "Path to a agent config file")
-	rootCmd.AddCommand(updateAgentConfigCmd)
 }
 
 func main() {

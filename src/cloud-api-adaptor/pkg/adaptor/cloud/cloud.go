@@ -21,6 +21,7 @@ import (
 
 	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/adaptor/k8sops"
 	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/adaptor/proxy"
+	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/agent"
 	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/cdh"
 	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/forwarder"
 	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/podnetwork"
@@ -270,6 +271,13 @@ func (s *cloudService) CreateVM(ctx context.Context, req *pb.CreateVMRequest) (r
 		},
 	}
 
+	if daemonConfig.AuthJson != "" {
+		cloudConfig.WriteFiles = append(cloudConfig.WriteFiles, cloudinit.WriteFile{
+			Path:    agent.DefaultAuthJsonPath,
+			Content: daemonConfig.AuthJson,
+		})
+	}
+
 	if s.aaKBCParams != "" {
 		toml, err := cdh.CreateConfigFile(s.aaKBCParams)
 		if err != nil {
@@ -279,6 +287,15 @@ func (s *cloudService) CreateVM(ctx context.Context, req *pb.CreateVMRequest) (r
 			Path:    cdh.ConfigFilePath,
 			Content: toml,
 		})
+	}
+	toml, err := agent.CreateConfigFile(daemonConfig.AAKBCParams); 
+	if err == nil {
+		cloudConfig.WriteFiles = append(cloudConfig.WriteFiles, cloudinit.WriteFile{
+			Path:    agent.DefaultAgentConfigPath,
+			Content: toml,
+		})
+	} else {
+		return nil, fmt.Errorf("creating agent config: %w", err)
 	}
 
 	sandbox := &sandbox{
