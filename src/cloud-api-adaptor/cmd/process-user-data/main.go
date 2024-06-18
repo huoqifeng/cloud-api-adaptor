@@ -7,7 +7,6 @@ import (
 	"os"
 
 	cmdUtil "github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/cmd"
-	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/agent"
 	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/cdh"
 	daemon "github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/forwarder"
 	"github.com/confidential-containers/cloud-api-adaptor/src/cloud-api-adaptor/pkg/userdata"
@@ -19,7 +18,7 @@ const (
 	providerAzure = "azure"
 	providerAws   = "aws"
 
-	defaultAuthJsonPath    = "/run/peerpod/auth.json"
+	defaultAuthJsonPath = "/run/peerpod/auth.json"
 )
 
 var versionFlag bool
@@ -36,7 +35,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	var agentConfigPath, cdhConfigPath, daemonConfigPath string
+	var cdhConfigPath, daemonConfigPath string
 	var fetchTimeout int
 
 	rootCmd.PersistentFlags().BoolVarP(&versionFlag, "version", "v", false, "Print the version")

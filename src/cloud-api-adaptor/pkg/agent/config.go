@@ -19,15 +19,15 @@ type AgentConfig struct {
 }
 
 func CreateConfigFile(aaKBCParams string) (string, error) {
-	config := AgentConfig {
-		ServerAddr: ServerAddr,
-		AaKbcParams: aaKBCParams,
+	config := AgentConfig{
+		ServerAddr:            ServerAddr,
+		AaKbcParams:           aaKBCParams,
 		ImageRegistryAuthFile: DefaultAuthJsonPath,
-		GuestComponentsProcs: GuestComponentsProcs,
+		GuestComponentsProcs:  GuestComponentsProcs,
 	}
 	bytes, err := toml.Marshal(config)
 	if err != nil {
 		return "", err
 	}
 	return string(bytes), nil
-} 
+}

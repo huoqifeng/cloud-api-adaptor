@@ -288,7 +288,7 @@ func (s *cloudService) CreateVM(ctx context.Context, req *pb.CreateVMRequest) (r
 			Content: toml,
 		})
 	}
-	toml, err := agent.CreateConfigFile(daemonConfig.AAKBCParams); 
+	toml, err := agent.CreateConfigFile(daemonConfig.AAKBCParams)
 	if err == nil {
 		cloudConfig.WriteFiles = append(cloudConfig.WriteFiles, cloudinit.WriteFile{
 			Path:    agent.DefaultAgentConfigPath,
