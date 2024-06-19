@@ -271,13 +271,6 @@ func (s *cloudService) CreateVM(ctx context.Context, req *pb.CreateVMRequest) (r
 		},
 	}
 
-	if daemonConfig.AuthJson != "" {
-		cloudConfig.WriteFiles = append(cloudConfig.WriteFiles, cloudinit.WriteFile{
-			Path:    agent.DefaultAuthJsonPath,
-			Content: daemonConfig.AuthJson,
-		})
-	}
-
 	if s.aaKBCParams != "" {
 		toml, err := cdh.CreateConfigFile(s.aaKBCParams)
 		if err != nil {
@@ -287,15 +280,15 @@ func (s *cloudService) CreateVM(ctx context.Context, req *pb.CreateVMRequest) (r
 			Path:    cdh.ConfigFilePath,
 			Content: toml,
 		})
-	}
-	toml, err := agent.CreateConfigFile(daemonConfig.AAKBCParams)
-	if err == nil {
+
+		toml, err = agent.CreateConfigFile(s.aaKBCParams, "")
+		if err != nil {
+			return nil, fmt.Errorf("creating attestation agent config: %w", err)
+		}
 		cloudConfig.WriteFiles = append(cloudConfig.WriteFiles, cloudinit.WriteFile{
-			Path:    agent.DefaultAgentConfigPath,
+			Path:    agent.DefaultAaConfigPath,
 			Content: toml,
 		})
-	} else {
-		return nil, fmt.Errorf("creating agent config: %w", err)
 	}
 
 	sandbox := &sandbox{

@@ -24,14 +24,15 @@ tools:
   rust: 1.74.0
   protoc: 3.15.0
   packer: v1.9.4
+  kcli: 99.0.202406160824
 # Referenced Git repositories
 git:
   guest-components:
     url: https://github.com/confidential-containers/guest-components
-    reference: 9bcc7c1addcbad1e249a6d870d9df68f2824254b
+    reference: fe9560bb99c0e89c0d81f24f08ac4b63d3e22821
   kata-containers:
     url: https://github.com/kata-containers/kata-containers
-    reference: 59ff40f05484da2a462fa44f18fe95e7c8484546
+    reference: 3.6.0
   umoci:
     url: https://github.com/opencontainers/umoci
     reference: v0.4.7

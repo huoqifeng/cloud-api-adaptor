@@ -1,33 +1,52 @@
 package agent
 
 import (
+	"fmt"
+	"strings"
+
 	toml "github.com/pelletier/go-toml/v2"
 )
 
 const (
-	ServerAddr             = "unix:///run/kata-containers/agent.sock"
-	GuestComponentsProcs   = "none"
-	DefaultAgentConfigPath = "/run/peerpod/agent-config.toml"
-	DefaultAuthJsonPath    = "/run/peerpod/auth.json"
+	DefaultAaConfigPath = "/run/peerpod/aa.toml"
 )
 
-type AgentConfig struct {
-	ServerAddr            string `toml:"server_addr"`
-	AaKbcParams           string `toml:"aa_kbc_params"`
-	ImageRegistryAuthFile string `toml:"image_registry_auth_file"`
-	GuestComponentsProcs  string `toml:"guest_components_procs"`
+type TokenConfigs struct {
+	TokenCfg struct {} `toml:"token_configs"`
+	CocoAs struct {
+		URL string `toml:"url"`
+	} `toml:"token_configs.coco_as"`
+	Kbs struct {
+		URL  string `toml:"url"`
+		Cert string `toml:"cert"`
+	} `toml:"token_configs.kbs"`
 }
 
-func CreateConfigFile(aaKBCParams string) (string, error) {
-	config := AgentConfig{
-		ServerAddr:            ServerAddr,
-		AaKbcParams:           aaKBCParams,
-		ImageRegistryAuthFile: DefaultAuthJsonPath,
-		GuestComponentsProcs:  GuestComponentsProcs,
+func parseAAKBCParams(aaKBCParams string) (string, error) {
+	parts := strings.SplitN(aaKBCParams, "::", 2)
+	if len(parts) != 2 {
+		return "", fmt.Errorf("Invalid aa-kbs-params input: %s", aaKBCParams)
 	}
+	_, url := parts[0], parts[1]
+	return url, nil
+}
+
+func CreateConfigFile(aaKBCParams string, certStr string) (string, error) {
+	url, err := parseAAKBCParams(aaKBCParams)
+	if err != nil {
+		return "", err
+	}
+
+	config := TokenConfigs{}
+	config.CocoAs.URL = ""
+	config.Kbs.URL = url
+	config.Kbs.Cert = certStr
+
 	bytes, err := toml.Marshal(config)
 	if err != nil {
 		return "", err
 	}
-	return string(bytes), nil
+	tomlString := strings.ReplaceAll(string(bytes), "['", "[")
+	tomlString = strings.ReplaceAll(tomlString, "']", "]")
+	return tomlString, nil
 }
