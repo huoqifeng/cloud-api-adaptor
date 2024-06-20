@@ -1,4 +1,4 @@
-package agent
+package aa
 
 import (
 	"fmt"
@@ -11,14 +11,15 @@ const (
 	DefaultAaConfigPath = "/run/peerpod/aa.toml"
 )
 
-type TokenConfigs struct {
-	TokenCfg struct {} `toml:"token_configs"`
-	CocoAs struct {
-		URL string `toml:"url"`
-	} `toml:"token_configs.coco_as"`
-	Kbs struct {
-		URL  string `toml:"url"`
-	} `toml:"token_configs.kbs"`
+type AAConfig struct {
+	TokenCfg struct {
+		CocoAs struct {
+			URL string `toml:"url"`
+		} `toml:"coco_as"`
+		Kbs struct {
+			URL string `toml:"url"`
+		} `toml:"kbs"`
+	} `toml:"token_configs"`
 }
 
 func parseAAKBCParams(aaKBCParams string) (string, error) {
@@ -36,15 +37,13 @@ func CreateConfigFile(aaKBCParams string) (string, error) {
 		return "", err
 	}
 
-	config := TokenConfigs{}
-	config.CocoAs.URL = ""
-	config.Kbs.URL = url
+	config := AAConfig{}
+	config.TokenCfg.CocoAs.URL = ""
+	config.TokenCfg.Kbs.URL = url
 
 	bytes, err := toml.Marshal(config)
 	if err != nil {
 		return "", err
 	}
-	tomlString := strings.ReplaceAll(string(bytes), "['", "[")
-	tomlString = strings.ReplaceAll(tomlString, "']", "]")
-	return tomlString, nil
+	return string(bytes), nil
 }

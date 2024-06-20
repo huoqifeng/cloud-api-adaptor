@@ -1,4 +1,4 @@
-package agent
+package aa
 
 import (
 	"testing"
@@ -18,7 +18,6 @@ func Test_parseAAKBCParams(t *testing.T) {
 
 func TestConfigFile(t *testing.T) {
 	refcfg := `[token_configs]
-
 [token_configs.coco_as]
 url = ''
 
