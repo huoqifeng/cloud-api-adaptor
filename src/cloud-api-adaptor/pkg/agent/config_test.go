@@ -24,10 +24,9 @@ url = ''
 
 [token_configs.kbs]
 url = 'http://127.0.0.1:8080'
-cert = ''
 `
 
-	config, err := CreateConfigFile("cc_kbc::http://127.0.0.1:8080", "")
+	config, err := CreateConfigFile("cc_kbc::http://127.0.0.1:8080")
 	if err != nil {
 		t.Error(err)
 	}

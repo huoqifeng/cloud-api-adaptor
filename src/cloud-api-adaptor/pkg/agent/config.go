@@ -18,7 +18,6 @@ type TokenConfigs struct {
 	} `toml:"token_configs.coco_as"`
 	Kbs struct {
 		URL  string `toml:"url"`
-		Cert string `toml:"cert"`
 	} `toml:"token_configs.kbs"`
 }
 
@@ -31,7 +30,7 @@ func parseAAKBCParams(aaKBCParams string) (string, error) {
 	return url, nil
 }
 
-func CreateConfigFile(aaKBCParams string, certStr string) (string, error) {
+func CreateConfigFile(aaKBCParams string) (string, error) {
 	url, err := parseAAKBCParams(aaKBCParams)
 	if err != nil {
 		return "", err
@@ -40,7 +39,6 @@ func CreateConfigFile(aaKBCParams string, certStr string) (string, error) {
 	config := TokenConfigs{}
 	config.CocoAs.URL = ""
 	config.Kbs.URL = url
-	config.Kbs.Cert = certStr
 
 	bytes, err := toml.Marshal(config)
 	if err != nil {
