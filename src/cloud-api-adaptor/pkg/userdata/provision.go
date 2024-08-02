@@ -29,6 +29,7 @@ const (
 	DaemonCfgPath = "/run/peerpod/daemon.json"
 
 	InitdataMeta = "/run/peerpod/initdata.meta"
+	InitdataToml = "/run/peerpod/initdata.toml"
 	DigestPath   = "/run/peerpod/initdata.digest"
 )
 
@@ -49,6 +50,7 @@ type Config struct {
 	paths        paths
 	digestPath   string
 	initdataMeta string
+	initdataToml string
 	parentPath   string
 	staticFiles  []string
 }
@@ -66,6 +68,7 @@ func NewConfig(fetchTimeout int) *Config {
 		paths:        ps,
 		parentPath:   ConfigParent,
 		initdataMeta: InitdataMeta,
+		initdataToml: InitdataToml,
 		digestPath:   DigestPath,
 		staticFiles:  StaticFiles,
 	}
@@ -88,7 +91,7 @@ type CloudConfig struct {
 type InitData struct {
 	Algorithm string            `toml:"algorithm"`
 	Version   string            `toml:"version"`
-	Data      map[string]string `toml:"data,omitempty"`
+	Data      map[string]string `toml:"data,multiline,omitempty"`
 }
 
 type UserDataProvider interface {
@@ -259,7 +262,7 @@ func processCloudConfig(cfg *Config, cc *CloudConfig) error {
 	return nil
 }
 
-func calculateUserDataHash(cfg *Config) error {
+func constructUserData(cfg *Config) error {
 	initToml, err := os.ReadFile(cfg.initdataMeta)
 	if err != nil {
 		return err
@@ -270,28 +273,54 @@ func calculateUserDataHash(cfg *Config) error {
 		return err
 	}
 
-	checksumStr := ""
-	var byteData []byte
+	initdata.Data = make(map[string]string)
 	for _, file := range cfg.staticFiles {
+		logger.Printf("Handling file %s\n", file)
 		if _, err := os.Stat(file); err == nil {
-			logger.Printf("calculateUserDataHash and reading file %s\n", file)
-			bytes, err := os.ReadFile(file)
+			fileName := filepath.Base(file)
+			content, err := os.ReadFile(file)
 			if err != nil {
-				return fmt.Errorf("Error reading file %s: %v", file, err)
+				return err
 			}
-			byteData = append(byteData, bytes...)
+			//initdata.Data[fileName] = string(content)
+			initdata.Data[fileName] = fmt.Sprintf("'''\n" + string(content) + "'''")
+			logger.Printf("Handled file %s\n", file)
 		}
 	}
 
+	constructedToml, err := toml.Marshal(initdata) // reconstructed toml
+	if err != nil {
+		return fmt.Errorf("failed to Marshal initdata toml %w", err)
+	}
+
+	if err := writeFile(cfg.initdataToml, constructedToml); err != nil {
+		return fmt.Errorf("failed to write initdata toml file %s: %w", cfg.initdataToml, err)
+	}
+
+	return nil
+}
+
+func calculateUserDataHash(cfg *Config) error {
+	initToml, err := os.ReadFile(cfg.initdataToml)
+	if err != nil {
+		return err
+	}
+	var initdata InitData
+	err = toml.Unmarshal(initToml, &initdata)
+	if err != nil {
+		return err
+	}
+
+	checksumStr := ""
 	switch initdata.Algorithm {
 	case "sha256":
-		hash := sha256.Sum256(byteData)
+		hash := sha256.Sum256(initToml)
 		checksumStr = hex.EncodeToString(hash[:])
 	case "sha384":
-		hash := sha512.Sum384(byteData)
+		hash := sha512.Sum384(initToml)
 		checksumStr = hex.EncodeToString(hash[:])
 	case "sha512":
-		hash := sha512.Sum512(byteData)
+		hash := sha512.Sum512(initToml)
 		checksumStr = hex.EncodeToString(hash[:])
 	default:
 		return fmt.Errorf("Error creating initdata hash, the Algorithm %s not supported", initdata.Algorithm)
@@ -326,6 +355,10 @@ func ProvisionFiles(cfg *Config) error {
 		}
 	} else {
 		logger.Printf("unsupported user data provider, we calculate initdata hash only.\n")
+	}
+
+	if err := constructUserData(cfg); err != nil {
+		return fmt.Errorf("failed to construct initdata: %w", err)
 	}
 
 	if err := calculateUserDataHash(cfg); err != nil {

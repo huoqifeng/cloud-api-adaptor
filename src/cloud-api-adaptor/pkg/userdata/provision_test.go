@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -103,8 +104,28 @@ default WaitProcessRequest := true
 default WriteStreamRequest := false
 `
 
-var testCheckSum = "4c3d78dfa7f2e9da1b0b16b845f3520ee6ca0e76dc33dbb8944e609076932d56b4c6ad2deda0bffc7887959fabfdd71d"
+var testInitdataToml string = testInitdataMeta +
+	"\n[data]" +
+	"\n\"aa.toml\" = '''\n" +
+	testAAConfig +
+	"'''" +
+	"\n\"cdh.toml\" = '''\n" +
+	testCDHConfig +
+	"'''" +
+	"\n\"policy.repo\" = '''\n" +
+	testPolicyConfig +
+	"'''"
 
+var testCheckSum = "752e973df66fb381d4d319c49169be0182a9000bc74aa9661a8eeab4f8a674043872f151bfb2cd93cff9b948cf028703"
+
+var testInitdataMarshalled string = `algorithm = 'sha384'
+version = '0.1.0'
+
+[data]
+'aa.toml' = "[token_configs]\n[token_configs.coco_as]\nurl = 'http://127.0.0.1:8080'\n\n[token_configs.kbs]\nurl = 'http://127.0.0.1:8080'\n"
+'cdh.toml' = "socket = 'unix:///run/confidential-containers/cdh.sock'\ncredentials = []\n\n[kbc]\nname = 'cc_kbc'\nurl = 'http://1.2.3.4:8080'\n"
+'policy.rego' = "package agent_policy\n\nimport future.keywords.in\nimport future.keywords.every\n\nimport input\n\n# Default values, returned by OPA when rules cannot be evaluated to true.\ndefault CopyFileRequest := false\ndefault CreateContainerRequest := false\ndefault CreateSandboxRequest := true\ndefault DestroySandboxRequest := true\ndefault ExecProcessRequest := false\ndefault GetOOMEventRequest := true\ndefault GuestDetailsRequest := true\ndefault OnlineCPUMemRequest := true\ndefault PullImageRequest := true\ndefault ReadStreamRequest := false\ndefault RemoveContainerRequest := true\ndefault RemoveStaleVirtiofsShareMountsRequest := true\ndefault SignalProcessRequest := true\ndefault StartContainerRequest := true\ndefault StatsContainerRequest := true\ndefault TtyWinResizeRequest := true\ndefault UpdateEphemeralMountsRequest := true\ndefault UpdateInterfaceRequest := true\ndefault UpdateRoutesRequest := true\ndefault WaitProcessRequest := true\ndefault WriteStreamRequest := false\n"
+`
 // Test server to simulate the metadata service
 func startTestServer() *httptest.Server {
 	// Create base64 encoded test data
@@ -353,6 +374,7 @@ write_files:
 		},
 		digestPath:   "",
 		initdataMeta: "",
+		initdataToml: "",
 		parentPath:   "",
 		staticFiles:  nil,
 	}
@@ -427,6 +449,7 @@ write_files:
 		},
 		digestPath:   "",
 		initdataMeta: "",
+		initdataToml: "",
 		parentPath:   "",
 		staticFiles:  nil,
 	}
@@ -462,37 +485,79 @@ func TestFailPlainTextUserData(t *testing.T) {
 
 }
 
-func TestCalculateUserDataHash(t *testing.T) {
+func TestConstructUserData(t *testing.T) {
+	tempDir, err := os.MkdirTemp("", "userdata")
+	if err != nil {
+		fmt.Println("Error creating temporary directory:", err)
+		return
+	}
+	defer os.RemoveAll(tempDir)
+
+	aaFilePath := filepath.Join(tempDir, "aa.toml")
+	cdhFilePath := filepath.Join(tempDir, "cdh.toml")
+	repoFilePath := filepath.Join(tempDir, "policy.rego")
+
 	tmpInitdataMeta, _ := os.CreateTemp("", "test")
 	defer os.Remove(tmpInitdataMeta.Name())
-	tmpAA, _ := os.CreateTemp("", "test")
-	defer os.Remove(tmpAA.Name())
-	tmpCDH, _ := os.CreateTemp("", "test")
-	defer os.Remove(tmpCDH.Name())
-	tmpPolicy, _ := os.CreateTemp("", "test")
-	defer os.Remove(tmpPolicy.Name())
-	tmpCheckSum, _ := os.CreateTemp("", "test")
-	defer os.Remove(tmpCheckSum.Name())
+	tmpInitdataToml, _ := os.CreateTemp("", "test")
+	defer os.Remove(tmpInitdataToml.Name())
 
-	var staticFiles = []string{tmpAA.Name(), tmpCDH.Name(), tmpPolicy.Name()}
+	var staticFiles = []string{aaFilePath, cdhFilePath, repoFilePath}
 	_ = writeFile(tmpInitdataMeta.Name(), []byte(testInitdataMeta))
-	_ = writeFile(tmpAA.Name(), []byte(testAAConfig))
-	_ = writeFile(tmpCDH.Name(), []byte(testCDHConfig))
-	_ = writeFile(tmpPolicy.Name(), []byte(testPolicyConfig))
+	_ = writeFile(aaFilePath, []byte(testAAConfig))
+	_ = writeFile(cdhFilePath, []byte(testCDHConfig))
+	_ = writeFile(repoFilePath, []byte(testPolicyConfig))
 
 	cfg := Config{
 		fetchTimeout: 180,
 		paths: paths{
-			aaConfig:     tmpAA.Name(),
+			aaConfig:     aaFilePath,
 			agentConfig:  "",
 			authJson:     "",
 			daemonConfig: "",
-			cdhConfig:    tmpCDH.Name(),
+			cdhConfig:    cdhFilePath,
 		},
-		digestPath:   tmpCheckSum.Name(),
+		digestPath:   "",
 		initdataMeta: tmpInitdataMeta.Name(),
+		initdataToml: tmpInitdataToml.Name(),
 		parentPath:   "",
 		staticFiles:  staticFiles,
+	}
+
+	err = constructUserData(&cfg)
+	if err != nil {
+		t.Fatalf("constructUserData returned err: %v", err)
+	}
+
+	bytes, _ := os.ReadFile(tmpInitdataToml.Name())
+	content := string(bytes)
+	if content != testInitdataMarshalled {
+		t.Fatalf("constructUserData returned: %s does not match %s", content, testInitdataToml)
+	}
+}
+
+func TestCalculateUserDataHash(t *testing.T) {
+	tmpInitdataToml, _ := os.CreateTemp("", "test")
+	defer os.Remove(tmpInitdataToml.Name())
+	tmpCheckSum, _ := os.CreateTemp("", "test")
+	defer os.Remove(tmpCheckSum.Name())
+
+	_ = writeFile(tmpInitdataToml.Name(), []byte(testInitdataToml))
+
+	cfg := Config{
+		fetchTimeout: 180,
+		paths: paths{
+			aaConfig:     "",
+			agentConfig:  "",
+			authJson:     "",
+			daemonConfig: "",
+			cdhConfig:    "",
+		},
+		digestPath:   tmpCheckSum.Name(),
+		initdataMeta: "",
+		initdataToml: tmpInitdataToml.Name(),
+		parentPath:   "",
+		staticFiles:  nil,
 	}
 
 	err := calculateUserDataHash(&cfg)
