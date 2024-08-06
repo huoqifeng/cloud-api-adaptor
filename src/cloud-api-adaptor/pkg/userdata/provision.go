@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/avast/retry-go/v4"
@@ -27,24 +28,26 @@ const (
 )
 
 var logger = log.New(log.Writer(), "[userdata/provision] ", log.LstdFlags|log.Lmsgprefix)
-
-var StaticFiles = []string{"/run/peerpod/aa.toml", "/run/peerpod/cdh.toml", "/run/peerpod/policy.rego"}
+var WriteFilesList = []string{"agent-config.toml", "daemon.json", "auth.json", "initdata"}
+var InitdDataFilesList = []string{"aa.toml", "cdh.toml", "policy.rego"}
 
 type Config struct {
-	fetchTimeout int
-	digestPath   string
-	initdataPath string
-	parentPath   string
-	staticFiles  []string
+	fetchTimeout  int
+	digestPath    string
+	initdataPath  string
+	parentPath    string
+	writeFiles    []string
+	initdataFiles []string
 }
 
 func NewConfig(fetchTimeout int) *Config {
 	return &Config{
-		fetchTimeout: fetchTimeout,
-		parentPath:   ConfigParent,
-		initdataPath: InitdataPath,
-		digestPath:   DigestPath,
-		staticFiles:  StaticFiles,
+		fetchTimeout:  fetchTimeout,
+		parentPath:    ConfigParent,
+		initdataPath:  InitdataPath,
+		digestPath:    DigestPath,
+		writeFiles:    WriteFilesList,
+		initdataFiles: InitdDataFilesList,
 	}
 }
 
@@ -174,14 +177,30 @@ func writeFile(path string, bytes []byte) error {
 	return nil
 }
 
+func isAllowed(path string, filesList []string) bool {
+	for _, listedFile := range filesList {
+		if listedFile == path {
+			return true
+		}
+		if strings.HasSuffix(path, listedFile) {
+			return true
+		}
+	}
+	return false
+}
+
 func processCloudConfig(cfg *Config, cc *CloudConfig) error {
 	for _, wf := range cc.WriteFiles {
 		path := wf.Path
 		bytes := []byte(wf.Content)
-		if bytes != nil {
-			if err := writeFile(path, bytes); err != nil {
-				return fmt.Errorf("failed to write config file %s: %w", path, err)
+		if isAllowed(path, cfg.writeFiles) {
+			if bytes != nil {
+				if err := writeFile(path, bytes); err != nil {
+					return fmt.Errorf("failed to write config file %s: %w", path, err)
+				}
 			}
+		} else {
+			logger.Printf("File: %s is not allowed in WriteFiles.\n", path)
 		}
 	}
 
@@ -209,9 +228,13 @@ func extractInitdataAndHash(cfg *Config) error {
 	}
 
 	for key, value := range initdata.Data {
-		err := writeFile(filepath.Join(cfg.parentPath, key), []byte(value))
-		if err != nil {
-			return fmt.Errorf("Error write a file in initdata: %w", err)
+		if isAllowed(key, cfg.initdataFiles) {
+			err := writeFile(filepath.Join(cfg.parentPath, key), []byte(value))
+			if err != nil {
+				return fmt.Errorf("Error write a file in initdata: %w", err)
+			}
+		} else {
+			logger.Printf("File: %s is not allowed in initdata.\n", key)
 		}
 	}
 
@@ -246,7 +269,7 @@ func ProvisionFiles(cfg *Config) error {
 
 	// some providers provision config files via process-user-data
 	// some providers rely on cloud-init provision config files
-	// all providers need calculate the hash value for attesters usage
+	// all providers need extract files from initdata and calculate the hash value for attesters usage
 	provider, _ := newProvider(ctx)
 	if provider != nil {
 		cc, err := retrieveCloudConfig(ctx, provider)
@@ -258,7 +281,7 @@ func ProvisionFiles(cfg *Config) error {
 			return fmt.Errorf("failed to process cloud config: %w", err)
 		}
 	} else {
-		logger.Printf("unsupported user data provider, we calculate initdata hash only.\n")
+		logger.Printf("unsupported user data provider, we extract and calculate initdata hash only.\n")
 	}
 
 	if err := extractInitdataAndHash(cfg); err != nil {
